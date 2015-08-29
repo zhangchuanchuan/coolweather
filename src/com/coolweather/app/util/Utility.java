@@ -1,11 +1,14 @@
 package com.coolweather.app.util;
 
+import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -14,7 +17,6 @@ import android.text.TextUtils;
 
 import com.coolweather.app.db.CoolWeatherDB;
 import com.coolweather.app.model.City;
-import com.coolweather.app.model.County;
 import com.coolweather.app.model.Province;
 
 public class Utility {
@@ -24,64 +26,95 @@ public class Utility {
 	 */
 	public synchronized static boolean handleProvincesResponse(
 			CoolWeatherDB coolWeatherDB, String response){
+		
 		if(!TextUtils.isEmpty(response)){
-			String[] allProvinces = response.split(",");
-			if(allProvinces != null && allProvinces.length>0){
-				for(String p : allProvinces){
-					String[] array = p.split("\\|");
-					Province province = new Province();
-					province.setProvinceCode(array[0]);
-					province.setProvinceName(array[1]);
-					coolWeatherDB.saveProvince(province);
+			try{
+				XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+				XmlPullParser xmlParser = factory.newPullParser();
+				
+				xmlParser.setInput(new StringReader(response));
+				int eventType = xmlParser.getEventType();
+				String string="";
+				while(eventType!=XmlPullParser.END_DOCUMENT){
+					String nodeName = xmlParser.getName();
+					switch(eventType){
 					
+					case XmlPullParser.START_TAG:{
+						if("string".equals(nodeName)){
+							
+							string = xmlParser.nextText();
+							String[] strs = string.split(",");
+							Province p = new Province();
+							p.setProvinceName(strs[0]);
+							p.setProvinceCode(strs[1]);
+							coolWeatherDB.saveProvince(p);
+						}
+					}
+					break;
+					
+					case XmlPullParser.END_TAG:{
+						
+					}
+					break;
+					
+					default:
+						break;
+					}
+					eventType=xmlParser.next();
 				}
 				return true;
+			}catch(Exception e){
+				e.printStackTrace();
 			}
 		}
 		return false;
 	}
-	
+
 	/**
 	 * 解析处理返回的市级数据
 	 */
 	public synchronized static boolean handleCitiesResponse(
 			CoolWeatherDB coolWeatherDB, String response, int provinceId){
+		
 		if(!TextUtils.isEmpty(response)){
-			String[] allCities = response.split(",");
-			if(allCities != null && allCities.length>0){
-				for(String p : allCities){
-					String[] array = p.split("\\|");
-					City city = new City();
-					city.setCityCode(array[0]);
-					city.setCityName(array[1]);
-					city.setProvinceId(provinceId);
-					coolWeatherDB.saveCity(city);
-					
-				}
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
-	 * 解析处理返回的County数据
-	 */
-	public synchronized static boolean handleCountiesResponse(
-					CoolWeatherDB coolWeatherDB, String response, int cityId){
-		if(!TextUtils.isEmpty(response)){
-			String[] allCounties = response.split(",");
-			if(allCounties !=null && allCounties.length>0){
-				for(String p : allCounties){
-					String[] array = p.split("\\|");
-					County county = new County();
-					county.setCountyCode(array[0]);
-					county.setCountyName(array[1]);
-					county.setCityId(cityId);
-					coolWeatherDB.saveCounty(county);
-				}
-				return true;
+			try{
+				XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+				XmlPullParser xmlParser = factory.newPullParser();
 				
+				xmlParser.setInput(new StringReader(response));
+				int eventType = xmlParser.getEventType();
+				String string="";
+				while(eventType!=XmlPullParser.END_DOCUMENT){
+					String nodeName = xmlParser.getName();
+					switch(eventType){
+					
+					case XmlPullParser.START_TAG:{
+						if("string".equals(nodeName)){
+							
+							string = xmlParser.nextText();
+							String[] strs = string.split(",");
+							City c = new City();
+							c.setCityName(strs[0]);
+							c.setCityCode(strs[1]);
+							c.setProvinceId(provinceId);
+							coolWeatherDB.saveCity(c);
+						}
+					}
+					break;
+					
+					case XmlPullParser.END_TAG:{
+						
+					}
+					break;
+					
+					default:
+						break;
+					}
+					eventType=xmlParser.next();
+				}
+				return true;
+			}catch(Exception e){
+				e.printStackTrace();
 			}
 		}
 		return false;
@@ -93,27 +126,25 @@ public class Utility {
 	public static void handleWeatherResponse(Context context, String response){
 		try{
 			JSONObject jsonObject = new JSONObject(response);
-			JSONObject weatherInfo = jsonObject.getJSONObject("weatherinfo");
+			JSONObject weatherInfo = jsonObject.getJSONObject("retData");
 			String cityName = weatherInfo.getString("city");
-			String weatherCode = weatherInfo.getString("cityid");
-			String temp1 = weatherInfo.getString("temp1");
-			String temp2 = weatherInfo.getString("temp2");
+			String temp1 = weatherInfo.getString("l_tmp");
+			String temp2 = weatherInfo.getString("h_tmp");
 			String weatherDesp = weatherInfo.getString("weather");
-			String publishTime = weatherInfo.getString("ptime");
-			saveWeatherInfo(context, cityName, weatherCode, temp1, temp2, weatherDesp, publishTime);
+			String publishTime = weatherInfo.getString("time");
+			saveWeatherInfo(context, cityName, temp1, temp2, weatherDesp, publishTime);
 		}catch(JSONException e){
 			e.printStackTrace();
 		}
 	}
 
 	public static void saveWeatherInfo(Context context, String cityName,
-			String weatherCode, String temp1, String temp2, String weatherDesp,
+			 String temp1, String temp2, String weatherDesp,
 			String publishTime) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyy年M月d日",Locale.CHINA);
 		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
 		editor.putBoolean("city_selected", true);
 		editor.putString("city_name", cityName);
-		editor.putString("weather_code", weatherCode);
 		editor.putString("temp1", temp1);
 		editor.putString("temp2", temp2);
 		editor.putString("weather_desp", weatherDesp);

@@ -1,5 +1,8 @@
 package com.coolweather.app.service;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -43,14 +46,18 @@ public class AutoUpdateService extends Service {
 	 */
 	private void updateWeather() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		String weatherCode = prefs.getString("weather_code", "");
-		String address = "http://www.weather.com.cn/data/cityinfo/"+weatherCode+".html";
-		HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
+		String cityName = prefs.getString("city_name", "");
+		try {
+			cityName = URLEncoder.encode(cityName, "utf-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		String address = "http://apis.baidu.com/apistore/weatherservice/cityname?cityname="+cityName;
+		HttpUtil.sendRequestWeather(address, new HttpCallbackListener() {
 			
 			@Override
 			public void onFinish(String response) {
 				Utility.handleWeatherResponse(AutoUpdateService.this, response);
-				
 			}
 			
 			@Override

@@ -22,7 +22,6 @@ import android.widget.Toast;
 import com.coolweather.app.R;
 import com.coolweather.app.db.CoolWeatherDB;
 import com.coolweather.app.model.City;
-import com.coolweather.app.model.County;
 import com.coolweather.app.model.Province;
 import com.coolweather.app.util.HttpCallbackListener;
 import com.coolweather.app.util.HttpUtil;
@@ -43,17 +42,15 @@ public class ChooseAreaActivity extends Activity {
 	private List<String> dataList = new ArrayList<String>();
 	
 	/**
-	 * 省，市，县列表
+	 * 省，市列表
 	 */
 	private List<Province> provinceList;
 	private List<City> cityList;
-	private List<County> countyList;
 	
 	/**
-	 * 被选中的省或市或县
+	 * 被选中的省或市
 	 */
 	private Province selectedProvince;
-	private City selectedCity;
 	
 	private int currentLevel;
 	
@@ -91,6 +88,14 @@ public class ChooseAreaActivity extends Activity {
 				if(currentLevel == LEVEL_PROVINCE){
 					selectedProvince = provinceList.get(position);
 					queryCities();
+				}else if(currentLevel == LEVEL_CITY){
+					String cityName = cityList.get(position)
+												.getCityName();		
+					Intent intent = new Intent(ChooseAreaActivity.this,
+							WeatherActivity.class);
+					intent.putExtra("city_name", cityName);
+					startActivity(intent);
+					finish();
 				}
 			}
 		});
@@ -120,10 +125,10 @@ public class ChooseAreaActivity extends Activity {
 	private void queryFromServer(final String code, final String type) {
 		String address;
 		if(!TextUtils.isEmpty(code)){
-			address = "http://www.weather.com.cn/data/list3/city"+code
-					+".xml";
+			address = "http://webservice.webxml.com.cn/WebServices/WeatherWS.asmx/getSupportCityString"
+					+"?theRegionCode="+code;
 		}else{
-			address = "http://www.weather.com.cn/data/list3/city.xml";
+			address = "http://webservice.webxml.com.cn/WebServices/WeatherWS.asmx/getRegionProvince";
 		}
 		showProgressDialog();
 		HttpUtil.sendHttpRequest(address, new HttpCallbackListener() {
