@@ -1,20 +1,30 @@
 package com.coolweather.app.activity;
 
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.text.TextUtils;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,7 +37,7 @@ import com.coolweather.app.util.HttpCallbackListener;
 import com.coolweather.app.util.HttpUtil;
 import com.coolweather.app.util.Utility;
 
-public class ChooseAreaActivity extends Activity {
+public class ChooseAreaActivity extends Activity implements android.view.View.OnClickListener{
 	/**
 	 * 需要的常量：当前等级
 	 */
@@ -54,6 +64,7 @@ public class ChooseAreaActivity extends Activity {
 	
 	private int currentLevel;
 	
+	
 	/**
 	 * 标志位，判断是否是从切换城市功能过来
 	 */
@@ -74,6 +85,8 @@ public class ChooseAreaActivity extends Activity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		setContentView(R.layout.choose_area);
 		//获得控件
+		Button search = (Button)findViewById(R.id.search);
+		search.setOnClickListener(this);
 		listView = (ListView)findViewById(R.id.list_view);
 		titleText = (TextView)findViewById(R.id.title_text);
 		adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1,dataList);
@@ -221,4 +234,88 @@ public class ChooseAreaActivity extends Activity {
 		}
 	}
 
+	private void showSearchDialog(){
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("查询城市天气");
+		View view = LayoutInflater.from(this).inflate(R.layout.dialog_search, null);
+		final EditText search_city = (EditText)view.findViewById(R.id.search_city);
+		builder.setView(view);
+		builder.setPositiveButton("确定", new OnClickListener() {
+			
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				final String city_name=search_city.getText().toString();
+				if(city_name.equals("")){
+					Toast.makeText(ChooseAreaActivity.this, "输入不能为空", Toast.LENGTH_SHORT).show();
+					showSearchDialog();
+					return;
+				}
+		
+				try {
+					String name_url = URLEncoder.encode(city_name, "utf-8");
+					String address = "http://apis.baidu.com/apistore/weatherservice/cityname?cityname="+name_url;
+					HttpUtil.sendRequestWeather(address, new HttpCallbackListener() {
+						
+						@Override
+						public void onFinish(String response) {
+							JSONObject jsonObject;
+							try {
+								jsonObject = new JSONObject(response);
+
+							String errNum = jsonObject.getString("errNum");
+								if(errNum.equals("-1")){
+									runOnUiThread(new Runnable(){
+
+										@Override
+										public void run() {
+											Toast.makeText(ChooseAreaActivity.this, "有这个城市吗？", Toast.LENGTH_SHORT).show();
+										}});
+									
+								}else{
+									runOnUiThread(new Runnable(){
+
+										@Override
+										public void run() {
+											Intent intent = new Intent(ChooseAreaActivity.this,
+													WeatherActivity.class);
+											intent.putExtra("city_name", city_name);
+											startActivity(intent);
+											finish();
+										}});
+								}
+								
+							} catch (JSONException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+						
+						@Override
+						public void onError(Exception e) {
+							// TODO Auto-generated method stub
+							
+						}
+					});
+
+					} catch(Exception e){
+					e.printStackTrace();
+				}
+			}
+		});
+		builder.setNegativeButton("取消", null);
+		builder.create().show();
+	}
+
+
+	@Override
+	public void onClick(View v) {
+		switch(v.getId()){
+		case R.id.search:
+			showSearchDialog();
+			break;
+		default :
+			break;
+		}
+	}
+	
 }

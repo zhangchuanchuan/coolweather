@@ -1,6 +1,8 @@
 package com.coolweather.app.util;
 
 import java.io.StringReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -153,7 +155,6 @@ public class Utility {
 		editor.commit();
 		
 	}
-	
 	
 	
 }
