@@ -34,7 +34,6 @@ public class ChooseAreaActivity extends Activity {
 	 */
 	public static final int LEVEL_PROVINCE = 0;
 	public static final int LEVEL_CITY = 1;
-	public static final int LEVEL_COUNTY = 2;
 	
 	private ProgressDialog progressDialog;
 	private TextView titleText;
@@ -92,15 +91,6 @@ public class ChooseAreaActivity extends Activity {
 				if(currentLevel == LEVEL_PROVINCE){
 					selectedProvince = provinceList.get(position);
 					queryCities();
-				}else if(currentLevel == LEVEL_CITY){
-					selectedCity = cityList.get(position);
-					queryCounties();
-				}else if(currentLevel == LEVEL_COUNTY){
-					String countyCode = countyList.get(position).getCountyCode();
-					Intent intent = new Intent(ChooseAreaActivity.this,WeatherActivity.class);
-					intent.putExtra("county_code", countyCode);
-					startActivity(intent);
-					finish();
 				}
 			}
 		});
@@ -145,9 +135,8 @@ public class ChooseAreaActivity extends Activity {
 					result = Utility.handleProvincesResponse(coolWeatherDB, response);
 				}else if("city".equals(type)){
 					result = Utility.handleCitiesResponse(coolWeatherDB, response, selectedProvince.getId());
-				}else if("county".equals(type)){
-					result = Utility.handleCountiesResponse(coolWeatherDB, response, selectedCity.getId());
 				}
+				
 				if(result){
 					//通过runOnUiThread的方法回到主线程
 					runOnUiThread(new Runnable(){
@@ -159,8 +148,6 @@ public class ChooseAreaActivity extends Activity {
 								queryProvinces();
 							}else if("city".equals(type)){
 								queryCities();
-							}else if("county".equals(type)){
-								queryCounties();
 							}
 						}			
 					});
@@ -198,21 +185,6 @@ public class ChooseAreaActivity extends Activity {
 		}
 	}
 	
-	private void queryCounties() {
-		countyList = coolWeatherDB.loadCounties(selectedCity.getId());
-		if(countyList.size()>0){
-			dataList.clear();
-			for(County county : countyList){
-				dataList.add(county.getCountyName());
-			}
-			adapter.notifyDataSetChanged();
-			listView.setSelection(0);
-			titleText.setText(selectedCity.getCityName());
-			currentLevel = LEVEL_COUNTY;
-		}else{
-			queryFromServer(selectedCity.getCityCode(), "county");
-		}
-	}
 	
 
 	private void showProgressDialog() {
@@ -233,9 +205,7 @@ public class ChooseAreaActivity extends Activity {
 	//back按钮事件
 	@Override
 	public void onBackPressed() {
-		if(currentLevel == LEVEL_COUNTY){
-			queryCities();
-		}else if(currentLevel == LEVEL_CITY){
+		 if(currentLevel == LEVEL_CITY){
 			queryProvinces();
 		}else{
 			if(isFromWeatherActivity){
