@@ -134,7 +134,12 @@ public class Utility {
 			String temp2 = weatherInfo.getString("h_tmp");
 			String weatherDesp = weatherInfo.getString("weather");
 			String publishTime = weatherInfo.getString("time");
-			saveWeatherInfo(context, cityName, temp1, temp2, weatherDesp, publishTime);
+			String wd = weatherInfo.getString("WD");
+			String ws = weatherInfo.getString("WS");
+			String sunrise = weatherInfo.getString("sunrise");
+			String sunset = weatherInfo.getString("sunset");
+			saveWeatherInfo(context, cityName, temp1, temp2, weatherDesp, publishTime
+					, wd, ws ,sunrise, sunset);
 		}catch(JSONException e){
 			e.printStackTrace();
 		}
@@ -142,7 +147,8 @@ public class Utility {
 
 	public static void saveWeatherInfo(Context context, String cityName,
 			 String temp1, String temp2, String weatherDesp,
-			String publishTime) {
+			String publishTime, String wd, String ws, String sunrise
+							, String sunset) {
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyƒÍM‘¬d»’",Locale.CHINA);
 		SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(context).edit();
 		editor.putBoolean("city_selected", true);
@@ -152,6 +158,10 @@ public class Utility {
 		editor.putString("weather_desp", weatherDesp);
 		editor.putString("publish_time", publishTime);
 		editor.putString("current_date", sdf.format(new Date()));
+		editor.putString("wd", wd);
+		editor.putString("ws", ws);
+		editor.putString("sunrise", sunrise);
+		editor.putString("sunset", sunset);
 		editor.commit();
 		
 	}

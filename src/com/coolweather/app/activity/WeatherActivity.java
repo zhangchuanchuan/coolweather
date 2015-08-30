@@ -35,6 +35,12 @@ public class WeatherActivity extends Activity implements OnClickListener{
 	private TextView temp2Text;
 	private TextView currentDateText;
 	
+	private TextView wdText;
+	private TextView wsText;
+	private TextView srText;
+	private TextView ssText;
+	
+	private LinearLayout bgWeather;
 	/**
 	 * 更新天气，切换城市
 	 */
@@ -55,6 +61,11 @@ public class WeatherActivity extends Activity implements OnClickListener{
 		temp1Text = (TextView)findViewById(R.id.temp1);
 		temp2Text= (TextView)findViewById(R.id.temp2);
 		currentDateText = (TextView)findViewById(R.id.current_data);
+		wdText = (TextView)findViewById(R.id.wind_state);
+		wsText = (TextView)findViewById(R.id.wind_speed);
+		srText = (TextView)findViewById(R.id.sunrise);
+		ssText = (TextView)findViewById(R.id.sunset);
+		bgWeather = (LinearLayout)findViewById(R.id.bg_weather);
 		
 		switchCity = (Button)findViewById(R.id.switch_city);
 		refresh = (Button)findViewById(R.id.refresh_weather);
@@ -76,14 +87,27 @@ public class WeatherActivity extends Activity implements OnClickListener{
 	private void showWeather() {
 		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
 		cityNameText.setText(prefs.getString("city_name", ""));
-		temp1Text.setText(prefs.getString("temp1", ""));
-		temp2Text.setText(prefs.getString("temp2", ""));
-		weatherDespText.setText(prefs.getString("weather_desp", ""));
+		temp1Text.setText(prefs.getString("temp1", "")+"℃");
+		temp2Text.setText(prefs.getString("temp2", "")+"℃");
+		String desp = prefs.getString("weather_desp", "");
+		weatherDespText.setText(desp);
 		publishText.setText("今天"+prefs.getString("publish_time", "")+"发布");
 		currentDateText.setText(prefs.getString("current_date", ""));
+		wdText.setText("风向:"+prefs.getString("wd", ""));
+		wsText.setText("风速:"+prefs.getString("ws", ""));
+		srText.setText("日出时间:"+prefs.getString("sunrise", ""));
+		ssText.setText("日落时间:"+prefs.getString("sunset", ""));
 		weatherInfoLayout.setVisibility(View.VISIBLE);
 		cityNameText.setVisibility(View.VISIBLE);
-		
+		if(desp.contains("云")){
+			bgWeather.setBackgroundResource(R.drawable.ic_weather_cloudy_bg);
+		}else if(desp.contains("雪")){
+			bgWeather.setBackgroundResource(R.drawable.ic_weather_snow_bg);
+		}else if(desp.contains("雨")){
+			bgWeather.setBackgroundResource(R.drawable.ic_weather_rain_bg);
+		}else{
+			bgWeather.setBackgroundResource(R.drawable.ic_weather_sunshine_bg);
+		}
 		Intent intent = new Intent(this, AutoUpdateService.class);
 		startService(intent);
 	}
